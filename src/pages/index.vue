@@ -9,44 +9,47 @@
 		<!-- 内容 -->
 		<div class="index_content">
 			<div class="user_info">
-				<img class="user_img" src="../static/get_icon.png">
+				<img class="user_img" :src="user_info.headimgurl">
 				<div class="info_text">
-					<div>用户名称</div>
-					<div>123123123123</div>
+					<div>{{user_info.nickname}}</div>
+					<div>{{user_info.alipay_account}}</div>
 				</div>
 			</div>
 			<div class="card_box display_style">
 				<div class="add_title">添加订单</div>
 				<div class="add_button" @click="addFn('1')">添加</div>
 			</div>
-			<van-list v-model:loading="loading" :finished="finished" @load="loadMore" finished-text="没有更多了" class="goods_list" v-if="listArray.length > 0">
+			<div class="goods_list" v-if="listArray.length > 0">
 				<div class="card_box margin_style" v-for="item in listArray">
 					<div class="name_status">
-						<div>姓名：彪子</div>
-						<div class="status">已拒绝</div>
+						<div>姓名：{{item.alipay_name}}</div>
+						<div class="status">{{item.record_status_name}}</div>
 					</div>
 					<div class="name_status">
-						支付宝账号：3123123123
+						支付宝账号：{{item.alipay_account}}
 					</div>
 					<div class="name_status">
-						订单号：3123123123
+						订单号：{{item.order_sn}}
 					</div>
 					<div class="name_status">
 						<div class="price_row">
 							<div>红包金额：</div>
 							<div class="price">
 								<div class="p_icon">¥</div>
-								<div class="p_value">78</div>
+								<div class="p_value">{{item.amount}}</div>
 							</div>
 						</div>
 					</div>
 					<div class="name_status margin_none">
-						<div class="by_price">（本金 ¥ 44  佣金 ¥ 3）</div>
-						<img class="status_icon" src="../static/get_icon.png" @click="getPackage">
-						<img class="status_icon" src="../static/edit_icon.png" @click="addFn('2')">
+						<div class="by_price">（本金 ¥ {{item.principal}}  佣金 ¥ {{item.commission}}）</div>
+						<div class="icon_row">
+							<img class="status_icon" src="../static/get_icon.png" v-if="item.record_status == 2" @click="getPackage(item.amount,item.id)">
+							<img class="status_icon cz" src="../static/edit_icon.png"  v-if="item.record_status == 0 || item.record_status == 2 || item.record_status == 5" @click="addFn('2',item.id)">
+						</div>
+						
 					</div>
 				</div>
-			</van-list>
+			</div>
 			<EmptyPage v-if="listArray.length == 0 && loading == false"></EmptyPage>
 		</div>
 		<!-- 领取弹窗 -->
@@ -54,7 +57,7 @@
 			<div class="model">
 				<img class="close_icon" src="../static/close_icon.png" @click="show_model = false">
 				<div class="model_title">红包金额</div>
-				<div class="money">58.88</div>
+				<div class="money">{{money}}</div>
 				<div class="commit_get" @click="commitGet">确认领取</div>
 				<img class="red_package" src="../static/red_package.png">
 			</div>
@@ -62,44 +65,65 @@
 	</div>
 </template>
 <script>
+	import resource from '../api/resource.js'
+
 	import EmptyPage from '../components/empty_page.vue'
 	export default{
 		data(){
 			return{
-				listArray:[1,2,3,4,5,6,7],		//列表
-				loading:false,
-				finished:false,
-				page:1,
-				pagesize:10,
+				user_info:{},					//用户信息
+				id:"",	
+				money:"",
+				listArray:[],					//列表
+				loading:true,
 				show_model:false,				//领取红包弹窗
 			}
 		},
+		created(){
+			//获取用户信息
+			this.getUserInfo();
+			//获取红包列表
+			this.gethbList();
+		},
 		methods:{
-			//加载更多
-			loadMore(){
-				this.page += 1;
-				//获取列表
-				this.getGoodsList();
+			//获取用户信息
+			getUserInfo(){
+				resource.getUserInfo().then(res => {
+					this.user_info = res.data.data;
+				})
 			},
-			//获取列表
-			getGoodsList(){
-				let arg = {
-					page:this.page,
-					pagesize:this.pagesize
-				}
-				
+			//获取红包列表
+			gethbList(){
+				resource.gethbList().then(res => {
+					this.loading = false;
+					this.listArray = res.data.data;
+				})
 			},
 			//点击领取红包
-			getPackage(){
+			getPackage(amount,id){
+				this.money = amount;
+				this.id = id;
 				this.show_model = true;
 			},
 			//确认领取
 			commitGet(){
-
+				let arg = {
+					id:this.id
+				}
+				resource.receiveOrder(arg).then(res => {
+					this.$toast(res.data.msg);
+					this.show_model = false;
+					//获取红包列表
+					this.gethbList();
+				})
 			},
 			//点击添加或编辑
-			addFn(type){
-				this.$router.push('/add_edit?type=' + type)
+			addFn(type,id){
+				if(type == '1'){
+					this.$router.push('/add_edit?type=' + type)
+				}else{
+					this.$router.push(`/add_edit?type=${type}&id=${id}`)
+				}
 			}
 		},
 		components:{
@@ -219,10 +243,18 @@
 				.by_price{
 					color: #746FF3;
 				}
-				.status_icon{
-					width: 28px;
-					height: 28px;
+				.icon_row{
+					display: flex;
+					align-items: center;
+					.status_icon{
+						width: 28px;
+						height: 28px;
+					}
+					.cz{
+						margin-left: 20px;
+					}
 				}
+				
 			}
 			.margin_none{
 				margin: 0;

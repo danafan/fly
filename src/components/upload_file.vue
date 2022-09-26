@@ -1,9 +1,9 @@
 <template>
 	<div class="image_list">
 		<div class="view_card_img" v-for="(item,index) in preview_images" :key="index">
-			<van-image class="view_image" fit="contain" :src="domain + item.urls" @click="previewImg(index)"
+			<van-image class="view_image" fit="contain" :src="item.file_url" @click="previewImg(index)"
 			/>
-			<img class="delete_icon" src="../static/delete_icon.png" @click="deleteFile(item.urls,index)">
+			<img class="delete_icon" src="../static/delete_icon.png" @click="deleteFile(item.filename,index)" v-if="type == '1'">
 		</div>
 		<div class="upload_container" v-if="preview_images.length < max_num">
 			<img class="upload_icon" src="../static/add_image.png">
@@ -69,7 +69,6 @@
 	export default{
 		data(){
 			return{
-				domain:"http://img.92nu.com/",	//图片前缀
 				preview_images:[],		//当前的图片列表
 				showPreImg:false,		//
 				new_images:[],			//预览的图片列表
@@ -77,6 +76,11 @@
 			}
 		},
 		props:{
+			//1:添加；2:编辑
+			type:{
+				type:String,
+				default:''
+			},
 			img_list:{
 				type:Array,
 				default:[]
@@ -94,6 +98,10 @@
 		},
 		created(){
 			this.preview_images = this.img_list;
+			// if(this.type == '2'){
+			// 	console.log(this.preview_images[0].file_url)
+			// 	this.new_images.push(this.preview_images[0].file_url);
+			// }
 		},
 		methods:{
 			// 上传图片
@@ -111,14 +119,10 @@
 						}
 						resource.uploadFile(arg).then(res => {
 							this.$refs.imgUpload.value = null;
-							if(res.data.code == 1){
-								let file = res.data.data;
-								this.preview_images.push(file);
-								//向父组件传递已选的图片列表
-								this.emitFn();
-							}else{
-								this.$toast(res.data.msg);
-							}
+							let file = res.data;
+							this.preview_images.push(file);
+							//向父组件传递已选的图片列表
+							this.emitFn();
 						})
 					}
 				}
@@ -126,30 +130,26 @@
     		//删除文件
     		deleteFile(url, index) {
     			let arg = {
-    				url: url,
+    				filename: url,
     			};
     			resource.delFile(arg).then((res) => {
-    				if (res.data.code == 1) {
-    					this.preview_images.splice(index, 1);
-    					//向父组件传递已选的图片列表
-    					this.emitFn();
-    				} else {
-    					this.$toast(res.data.msg);
-    				}
+    				this.preview_images.splice(index, 1);
+    				//向父组件传递已选的图片列表
+    				this.emitFn();
     			});
     		},
     		//点击预览
     		previewImg(index){
     			this.activeIndex = index;
-    			this.showPreImg = true;
+    			this.showPreImg = this.type == '1'?true:false;
     		},
     		//向父组件传递已选的图片列表
     		emitFn(){
     			let image_arr = [];
     			let new_images = []
     			this.preview_images.map(item => {
-    				image_arr.push(item.urls);
-    				new_images.push(this.domain + item.urls);
+    				image_arr.push(item.filename);
+    				new_images.push(item.file_url);
     			})
     			this.new_images = new_images;
     			this.$emit('callbackFn',image_arr);

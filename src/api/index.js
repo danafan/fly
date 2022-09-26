@@ -2,7 +2,7 @@ import axios from 'axios'
 import router from '../router/index.js'
 import { Toast } from "vant";
 
-const baseURL = `${location.origin}/api/`;
+const baseURL = `${location.origin}/wx/`;
 
 // 创建axios实例，可以自定义配置
 const instance = axios.create({
@@ -27,7 +27,7 @@ instance.interceptors.response.use(response => {
     return response.data;
   }
   switch (response.data.code) {
-    case 1:
+    case 0:
     return response;
     default:
     Toast(response.data.msg);
