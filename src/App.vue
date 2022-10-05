@@ -9,9 +9,10 @@
 	export default {
 		name: 'app',
 		created(){
-			resource.testLogin({idd:1}).then(res => {
-				this.$router.replace('/index');
-			})
+			this.$router.replace('/index');
+			// resource.testLogin({idd:1}).then(res => {
+			// 	this.$router.replace('/index');
+			// })
 		}
 	}
 </script>

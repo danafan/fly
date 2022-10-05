@@ -1,6 +1,7 @@
 <template>
 	<div class="add_edit_container">
 		<div class="top_content">
+			<div class="store_name">{{store_name}}</div>
 			<div class="item_row display_style">
 				<div class="lable">订单号</div>
 				<div v-if="type == '2'">{{order_code}}</div>
@@ -13,6 +14,11 @@
 			<div class="item_row display_style">
 				<div class="lable">支付宝账号</div>
 				<input class="input" placeholder="请输入支付宝账号" v-model="alipay_code">
+			</div>
+			<div class="item_row display_style">
+				<div class="lable">实付金额</div>
+				<div v-if="type == '2'">{{principal}}</div>
+				<input class="input" type="number" placeholder="实付金额（大于0且最多两位小数）" v-model="principal" v-else>
 			</div>
 			<div class="item_row">
 				<div class="lable">截图</div>
@@ -33,11 +39,13 @@
 	export default{
 		data(){
 			return{
+				store_name:"店铺名称",		//店铺名称
 				type:'',			//页面类型（1:添加；2:编辑）
 				id:"",				//编辑的ID
 				order_code:"",		//订单号
 				name:"",			//姓名
 				alipay_code:"",		//支付宝账号
+				principal:"",		//实付金额
 				img_list:[],		//图片后缀数组
 				show_dialog:false,
 				message_content:"",	//提交提示内容
@@ -46,6 +54,7 @@
 		created(){
 			this.type = this.$route.query.type;
 			this.id = this.type == '1'?'':this.$route.query.id;
+			this.store_name = this.$route.query.store_name;
 			if(this.type == '2'){
 				//获取红包详情
 				this.hbInfo();
@@ -62,6 +71,7 @@
 					this.order_code = data.order_sn;
 					this.name = data.alipay_name;
 					this.alipay_code = data.alipay_account;
+					this.principal = data.principal;
 					let dd = {
 						file_url:data.screenshot
 					}
@@ -80,6 +90,10 @@
 					this.$toast('请输入姓名');
 				}else if(this.alipay_code == ''){
 					this.$toast('请输入支付宝账号');
+				}else if(this.principal == ''){
+					this.$toast('请输入实付金额');
+				}else if(!this.isPrice.test(this.principal)){
+					this.$toast('实付金额大于0且最多两位小数');
 				}else if(this.type == '1' && this.img_list.length == 0){
 					this.$toast('请上传截图');
 				}else{
@@ -96,6 +110,7 @@
 				if(this.type == '1'){
 					arg.order_sn = this.order_code;
 					arg.screenshot = this.img_list[0];
+					arg.principal = this.principal;
 					resource.addOrder(arg).then(res => {
 						this.$toast(res.data.msg);
 						this.$router.go(-1);
@@ -126,6 +141,14 @@
 	flex-direction: column;
 	.top_content{
 		background: #ffffff;
+		.store_name{
+			width: 100%;
+			text-align: center;
+			height: 35px;
+			line-height: 35px;
+			font-size:16px;
+			font-weight: bold;
+		}
 		.item_row{
 			border-bottom: 1px solid #E8E8E8;
 			padding: 18px 15px;

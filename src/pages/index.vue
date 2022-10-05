@@ -119,10 +119,11 @@
 			},
 			//点击添加或编辑
 			addFn(type,id){
+				let login_shop = this.user_info.login_shop;
 				if(type == '1'){
-					this.$router.push('/add_edit?type=' + type)
+					this.$router.push(`/add_edit?store_name=${login_shop?login_shop.shop_name:'店铺错误'}&type=${type}`)
 				}else{
-					this.$router.push(`/add_edit?type=${type}&id=${id}`)
+					this.$router.push(`/add_edit?store_name=${login_shop?login_shop.shop_name:'店铺错误'}&type=${type}&id=${id}`)
 				}
 			}
 		},
