@@ -21,7 +21,7 @@
 				<input class="input" type="number" placeholder="实付金额（大于0且最多两位小数）" v-model="principal" v-else>
 			</div>
 			<div class="item_row">
-				<div class="lable">截图</div>
+				<div class="img_lable">截图<span v-if="type == '1'">（禁止P图，订单明细必须展开）</span></div>
 				<UploadFile :img_list="img_list" :type="type" :current_num="img_list.length" :max_num="1" @callbackFn="callbackFn"/>
 			</div>
 		</div>
@@ -55,6 +55,8 @@
 			this.type = this.$route.query.type;
 			this.id = this.type == '1'?'':this.$route.query.id;
 			this.store_name = this.$route.query.store_name;
+			this.name = this.$route.query.nickname;
+			this.alipay_code = this.$route.query.alipay_account;
 			if(this.type == '2'){
 				//获取红包详情
 				this.hbInfo();
@@ -156,7 +158,14 @@
 			.lable{
 				width: 90px;
 				color: #333333;
+				font-weight: 500;	
+			}
+			.img_lable{
+				color: #333333;
 				font-weight: 500;
+				span{
+					color: red
+				}
 			}
 			.input{
 				outline: none;
